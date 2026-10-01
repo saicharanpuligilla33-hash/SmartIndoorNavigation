@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Smart Indoor Navigation</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f1f5f9;
+            color: #172b4d;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1500px;
+            margin: 30px auto;
+        }
+
+        /* ---------------- HEADER ---------------- */
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 18px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            color: #172b4d;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 17px;
+        }
+
+        /* ---------------- FIND ROUTE ---------------- */
+
+        .search-card {
+            background: white;
+            padding: 30px;
+            border-radius: 18px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+        }
+
+        .search-card h2 {
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 220px;
+            gap: 20px;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #172b4d;
+        }
+
+        select {
+            width: 100%;
+            padding: 16px;
+            font-size: 17px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            outline: none;
+        }
+
+        select:focus {
+            border-color: #2563eb;
+        }
+
+        .find-button {
+            padding: 16px 25px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .find-button:hover {
+            background: #1d4ed8;
+        }
+
+        .find-button:active {
+            transform: scale(0.98);
+        }
+
+        /* ---------------- MAIN CONTENT ---------------- */
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+            gap: 25px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h2 {
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        /* ---------------- MAP ---------------- */
+
+        .map-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .map {
+            position: relative;
+
+            width: 100%;
+            min-width: 750px;
+            height: 520px;
+
+            background: #e2e8f0;
+
+            border: 4px solid #cbd5e1;
+            border-radius: 18px;
+
+            overflow: hidden;
+        }
+
+        /* SVG route layer */
+
+        #routeSvg {
+            position: absolute;
+
+            top: 0;
+            left: 0;
+
+            width: 100%;
+            height: 100%;
+
+            z-index: 5;
+
+            pointer-events: none;
+
+            overflow: visible;
+        }
+
+        #routeLine {
+            fill: none;
+
+            stroke: #16a34a;
+
+            stroke-width: 12;
+
+            stroke-linecap: round;
+
+            stroke-linejoin: round;
+
+            opacity: 1;
+
+            display: none;
+
+            visibility: visible;
+        }
+
+        /* ---------------- MAP ROOMS ---------------- */
+
+        .location {
+            position: absolute;
+
+            width: 180px;
+            height: 80px;
+
+            background: white;
+
+            border: 4px solid #2563eb;
+
+            border-radius: 14px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            text-align: center;
+
+            font-size: 18px;
+
+            font-weight: bold;
+
+            color: #172b4d;
+
+            z-index: 10;
+
+            transform: translate(-50%, -50%);
+
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+
+            transition: 0.2s;
+        }
+
+        .location:hover {
+            transform: translate(-50%, -50%) scale(1.03);
+        }
+
+        /* Exact map positions */
+
+        #entrance {
+            left: 14%;
+            top: 18%;
+        }
+
+        #room101 {
+            left: 50%;
+            top: 18%;
+        }
+
+        #room102 {
+            left: 86%;
+            top: 18%;
+        }
+
+        #room103 {
+            left: 50%;
+            top: 82%;
+        }
+
+        #room104 {
+            left: 86%;
+            top: 82%;
+        }
+
+        /* ---------------- NAVIGATION INFORMATION ---------------- */
+
+        .info-item {
+            padding: 20px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-item strong {
+            display: block;
+            font-size: 17px;
+            margin-bottom: 8px;
+            color: #172b4d;
+        }
+
+        .info-value {
+            font-size: 18px;
+            color: #334155;
+        }
+
+        #status {
+            color: #16a34a;
+            font-weight: bold;
+        }
+
+        #routePath {
+            color: #2563eb;
+            font-weight: bold;
+            line-height: 1.7;
+        }
+
+        /* ---------------- FOOTER ---------------- */
+
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            padding: 20px;
+            color: #64748b;
+        }
+
+        /* ---------------- RESPONSIVE ---------------- */
+
+        @media (max-width: 900px) {
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .find-button {
+                width: 100%;
+            }
+
+            .header h1 {
+                font-size: 28px;
+            }
+
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <!-- HEADER -->
+
+    <div class="header">
+
+        <h1>Smart Indoor Navigation</h1>
+
+        <p>
+            Find the shortest route between locations inside the building.
+        </p>
+
+    </div>
+
+
+    <!-- FIND ROUTE -->
+
+    <div class="search-card">
+
+        <h2>Find Your Destination</h2>
+
+        <div class="form-row">
+
+            <div class="form-group">
+
+                <label for="start">
+                    Starting Point
+                </label>
+
+                <select id="start">
+
+                    <option value="">
+                        Select starting point
+                    </option>
+
+                    <option value="Main Entrance">
+                        Main Entrance
+                    </option>
+
+                    <option value="Room 101">
+                        Room 101
+                    </option>
+
+                    <option value="Room 102">
+                        Room 102
+                    </option>
+
+                    <option value="Room 103">
+                        Room 103
+                    </option>
+
+                    <option value="Room 104">
+                        Room 104
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="destination">
+                    Destination
+                </label>
+
+                <select id="destination">
+
+                    <option value="">
+                        Select destination
+                    </option>
+
+                    <option value="Main Entrance">
+                        Main Entrance
+                    </option>
+
+                    <option value="Room 101">
+                        Room 101
+                    </option>
+
+                    <option value="Room 102">
+                        Room 102
+                    </option>
+
+                    <option value="Room 103">
+                        Room 103
+                    </option>
+
+                    <option value="Room 104">
+                        Room 104
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <button
+                class="find-button"
+                onclick="findRoute()">
+
+                Find Route
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- MAIN CONTENT -->
+
+    <div class="main-grid">
+
+
+        <!-- MAP -->
+
+        <div class="card">
+
+            <h2>Indoor Map</h2>
+
+            <div class="map-wrapper">
+
+                <div class="map" id="map">
+
+                    <!-- SVG ROUTE -->
+
+                    <svg
+                        id="routeSvg"
+                        viewBox="0 0 1000 500"
+                        preserveAspectRatio="none">
+
+                        <polyline
+                            id="routeLine"
+                            points=""
+                            fill="none"
+                            stroke="#16a34a"
+                            stroke-width="12"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            style="display:none;">
+                        </polyline>
+
+                    </svg>
+
+
+                    <!-- LOCATIONS -->
+
+                    <div
+                        class="location"
+                        id="entrance">
+
+                        Main Entrance
+
+                    </div>
+
+
+                    <div
+                        class="location"
+                        id="room101">
+
+                        Room 101
+
+                    </div>
+
+
+                    <div
+                        class="location"
+                        id="room102">
+
+                        Room 102
+
+                    </div>
+
+
+                    <div
+                        class="location"
+                        id="room103">
+
+                        Room 103
+
+                    </div>
+
+
+                    <div
+                        class="location"
+                        id="room104">
+
+                        Room 104
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- INFORMATION -->
+
+        <div class="card">
+
+            <h2>Navigation Information</h2>
+
+
+            <div class="info-item">
+
+                <strong>
+                    Status
+                </strong>
+
+                <div
+                    class="info-value"
+                    id="status">
+
+                    Ready
+
+                </div>
+
+            </div>
+
+
+            <div class="info-item">
+
+                <strong>
+                    Starting Point
+                </strong>
+
+                <div
+                    class="info-value"
+                    id="startInfo">
+
+                    Not selected
+
+                </div>
+
+            </div>
+
+
+            <div class="info-item">
+
+                <strong>
+                    Destination
+                </strong>
+
+                <div
+                    class="info-value"
+                    id="destinationInfo">
+
+                    Not selected
+
+                </div>
+
+            </div>
+
+
+            <div class="info-item">
+
+                <strong>
+                    Shortest Distance
+                </strong>
+
+                <div
+                    class="info-value"
+                    id="distance">
+
+                    -
+
+                </div>
+
+            </div>
+
+
+            <div class="info-item">
+
+                <strong>
+                    Route
+                </strong>
+
+                <div
+                    class="info-value"
+                    id="routePath">
+
+                    -
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="footer">
+
+        Smart Indoor Navigation System
+
+    </div>
+
+</div>
+
+
+<script>
+
+
+/* =========================================================
+   NODE POSITIONS
+   These coordinates correspond to the SVG viewBox
+   0 0 1000 500
+   ========================================================= */
+
+const nodePositions = {
+
+    "Main Entrance": [140, 90],
+
+    "Room 101": [500, 90],
+
+    "Room 102": [860, 90],
+
+    "Room 103": [500, 410],
+
+    "Room 104": [860, 410]
+
+};
+
+
+/* =========================================================
+   DRAW ROUTE
+   ========================================================= */
+
+function drawRoute(path) {
+
+    const routeLine =
+        document.getElementById("routeLine");
+
+
+    if (!routeLine) {
+
+        console.error(
+            "routeLine SVG element not found"
+        );
+
+        return;
+    }
+
+
+    console.log(
+        "Drawing route:",
+        path
+    );
+
+
+    const points = path
+
+        .map(location => {
+
+            console.log(
+                "Location:",
+                location,
+                "Position:",
+                nodePositions[location]
+            );
+
+            return nodePositions[location];
+
+        })
+
+        .filter(position =>
+            position !== undefined
+        )
+
+        .map(position =>
+            position.join(",")
+        )
+
+        .join(" ");
+
+
+    console.log(
+        "SVG points:",
+        points
+    );
+
+
+    if (!points) {
+
+        console.error(
+            "No valid SVG points found."
+        );
+
+        routeLine.style.display = "none";
+
+        return;
+    }
+
+
+    routeLine.setAttribute(
+        "points",
+        points
+    );
+
+
+    routeLine.style.display = "block";
+
+    routeLine.style.visibility = "visible";
+
+    routeLine.style.opacity = "1";
+
+
+    console.log(
+        "Green route line displayed"
+    );
+
+}
+
+
+/* =========================================================
+   CLEAR ROUTE
+   ========================================================= */
+
+function clearRoute() {
+
+    const routeLine =
+        document.getElementById("routeLine");
+
+
+    if (routeLine) {
+
+        routeLine.setAttribute(
+            "points",
+            ""
+        );
+
+        routeLine.style.display =
+            "none";
+    }
+
+}
+
+
+/* =========================================================
+   FIND ROUTE
+   ========================================================= */
+
+async function findRoute() {
+
+
+    const start =
+        document.getElementById(
+            "start"
+        ).value;
+
+
+    const destination =
+        document.getElementById(
+            "destination"
+        ).value;
+
+
+    const status =
+        document.getElementById(
+            "status"
+        );
+
+
+    const distance =
+        document.getElementById(
+            "distance"
+        );
+
+
+    const routePath =
+        document.getElementById(
+            "routePath"
+        );
+
+
+    const startInfo =
+        document.getElementById(
+            "startInfo"
+        );
+
+
+    const destinationInfo =
+        document.getElementById(
+            "destinationInfo"
+        );
+
+
+    /* ---------------- VALIDATION ---------------- */
+
+    if (!start || !destination) {
+
+        status.innerText =
+            "Please select both locations.";
+
+        status.style.color =
+            "#dc2626";
+
+        clearRoute();
+
+        distance.innerText =
+            "-";
+
+        routePath.innerText =
+            "-";
+
+        return;
+    }
+
+
+    /* ---------------- SAME LOCATION ---------------- */
+
+    if (start === destination) {
+
+        status.innerText =
+            "Starting point and destination cannot be the same.";
+
+        status.style.color =
+            "#dc2626";
+
+        clearRoute();
+
+        distance.innerText =
+            "-";
+
+        routePath.innerText =
+            "-";
+
+        return;
+    }
+
+
+    /* ---------------- DISPLAY SELECTION ---------------- */
+
+    startInfo.innerText =
+        start;
+
+
+    destinationInfo.innerText =
+        destination;
+
+
+    status.innerText =
+        "Calculating route...";
+
+
+    status.style.color =
+        "#2563eb";
+
+
+    distance.innerText =
+        "-";
+
+
+    routePath.innerText =
+        "-";
+
+
+    clearRoute();
+
+
+    /* ---------------- CALL FLASK ---------------- */
+
+    try {
+
+        const response =
+            await fetch(
+                "/find-route",
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body: JSON.stringify({
+
+                        start: start,
+
+                        destination:
+                            destination
+
+                    })
+
+                }
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Server returned HTTP " +
+                response.status
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "Route response:",
+            data
+        );
+
+
+        /* ---------------- SERVER ERROR ---------------- */
+
+        if (!data.success) {
+
+            status.innerText =
+                data.message ||
+                "Route could not be found.";
+
+            status.style.color =
+                "#dc2626";
+
+            clearRoute();
+
+            distance.innerText =
+                "-";
+
+            routePath.innerText =
+                "-";
+
+            return;
+        }
+
+
+        /* ---------------- SUCCESS ---------------- */
+
+        status.innerText =
+            data.message ||
+            "Route found";
+
+
+        status.style.color =
+            "#16a34a";
+
+
+        distance.innerText =
+            data.distance +
+            " meters";
+
+
+        routePath.innerText =
+            data.path.join(" → ");
+
+
+        /* ---------------- DRAW GREEN LINE ---------------- */
+
+        drawRoute(
+            data.path
+        );
+
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Route error:",
+            error
+        );
+
+
+        status.innerText =
+            "Unable to calculate route.";
+
+
+        status.style.color =
+            "#dc2626";
+
+
+        distance.innerText =
+            "-";
+
+
+        routePath.innerText =
+            "-";
+
+
+        clearRoute();
+
+    }
+
+}
+
+
+/* =========================================================
+   OPTIONAL: UPDATE INFORMATION WHEN SELECT CHANGES
+   ========================================================= */
+
+document
+    .getElementById("start")
+    .addEventListener(
+        "change",
+        function () {
+
+            document
+                .getElementById(
+                    "startInfo"
+                )
+                .innerText =
+                this.value ||
+                "Not selected";
+
+        }
+    );
+
+
+document
+    .getElementById("destination")
+    .addEventListener(
+        "change",
+        function () {
+
+            document
+                .getElementById(
+                    "destinationInfo"
+                )
+                .innerText =
+                this.value ||
+                "Not selected";
+
+        }
+    );
+
+
+</script>
+
+</body>
+
+</html>
